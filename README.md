@@ -2,7 +2,7 @@
 
 StayScope is a comprehensive analytics platform designed to transform hotel booking data into actionable insights. It integrates advanced data processing and visualization tools to support decision-making in the hospitality and hotel industry.
 
-Demo can be found below [DEMO](#demo).
+[DEMO](#demo) can be found below.
 
 ## Technologies and Tools
 
