@@ -97,7 +97,7 @@ streamlit run streamlit_webapp.py
 DATABASE_URL = 'your-full-postgresql-url'
 DATABASE_TABLE_NAME = 'your-database-table-name'
 ELASTICSEARCH_SETTINGS = {
-    'host': 'es-running-host,
+    'host': 'es-running-host',
     'port': 'es-running-port',
     'scheme': 'http', #default.
     'auth': ('user', 'secret') #default.
@@ -122,9 +122,20 @@ ENDPOINTS = {
         "revenue_analysis_by_room_and_month": "/api/v1/reports/revenue_analysis_by_room_and_month",
         "impact_of_lead_time_on_adr": "/api/v1/reports/impact_of_lead_time_on_adr",
         "analyze_booking_composition": "/api/v1/reports/analyze_booking_composition",
+
+https://github.com/nedimcanulusoy/StayScope/assets/37252702/e817fa01-8573-4670-a378-3b595bd6ba99
+
+
         "correlate_cancelations_with_factors": "/api/v1/reports/correlate_cancelations_with_factors",
         "correlate_adr_with_factors": "/api/v1/reports/correlate_adr_with_factors",
         "analyze_repeat_guest_bookings": "/api/v1/reports/analyze_repeat_guest_bookings",
 }
 ```
+
+---
+
+## Demo
+https://github.com/nedimcanulusoy/StayScope/assets/37252702/7f87e527-bbee-4139-a132-9f8751e39223
+
+
 
