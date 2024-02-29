@@ -4,12 +4,13 @@ import os
 project_path = os.path.dirname(os.path.abspath(__file__))
 os.chdir(project_path)
 
-from elasticsearch import Elasticsearch, exceptions
+from elasticsearch import Elasticsearch, exceptions, helpers
 from elasticsearch.helpers import bulk
 from logger_setup import Logger
 from models import HotelBooking, get_db
 from config import ELASTICSEARCH_SETTINGS, ES_INDEX_NAME
 from logger_setup import Logger
+from tqdm import tqdm
 
 log = Logger(__name__, './logs/elasticsearch.log').get_logger()
 
@@ -100,11 +101,14 @@ class ElasticsearchService(object):
     
 
     def index_document(self, index_name, document):
+        silent = True
         try:
             # Use the index API to add or update a document.
             response = self.es.index(index=index_name, document=document)
-            log.info(f"Document indexed successfully in {index_name}: {response}")
+            if not silent:    
+                log.info(f"Document indexed successfully in {index_name}: {response}")
             return response
+
         except Exception as e:
             log.error(f"Error indexing document in {index_name}: {e}")
             return None
@@ -135,6 +139,7 @@ class ElasticsearchService(object):
         session = next(db_gen)  # Advance to the first yield to get the session
 
         documents = self.db_to_es_docs(session, index_name)
+        
         try:
             bulk(self.es, documents)
             log.info(f'Data inserted into {index_name} from database')
@@ -143,6 +148,60 @@ class ElasticsearchService(object):
         finally:
             next(db_gen, None)
             
+
+    # New method for preparing documents for upsert
+    def db_to_es_docs_for_upsert(self, session, index_name):
+        documents = []
+        
+        query = session.query(HotelBooking).all()
+        for instance in query:
+            doc_id = getattr(instance, 'id')  # Assuming 'id' is the unique identifier
+            doc = {c.name: getattr(instance, c.name) for c in instance.__table__.columns}
+            doc['hotel_suggest'] = {"input": doc['hotel']}
+            doc['country_suggest'] = {"input": doc['country']}
+            doc['reservation_status_suggest'] = {'input': doc['reservation_status']}
+
+            documents.append({
+                "_op_type": "update",
+                "_index": index_name,
+                "_id": doc_id,
+                "doc": doc,
+                "doc_as_upsert": True
+            })
+        return documents
+
+    # New method for bulk upsert
+    def bulk_upsert_data_from_db(self, index_name):
+        db_gen = get_db()  # Session management remains unchanged
+        session = next(db_gen)
+
+        documents = self.db_to_es_docs_for_upsert(session, index_name)
+        
+        try:
+            bulk(self.es, documents)
+            log.info(f'Data upserted into {index_name} from database')
+        except exceptions.BulkIndexError as e:
+            log.error(f'Error during bulk upsert operation: {e}')
+        except Exception as e:
+            log.error(f'General error during bulk upsert operation: {e}')
+        finally:
+            next(db_gen, None)  # Close the session properly
+
+    def bulk_upsert(self, documents, index_name):
+        actions = [
+            {
+                "_op_type": "update",
+                "_index": index_name,
+                "_id": doc["id"],  # Assuming each document has a unique ID field
+                "doc": doc,
+                "doc_as_upsert": True
+            }
+            for doc in documents
+        ]
+
+        # Perform the bulk operation
+        helpers.bulk(self.es, actions)
+
 
     def search_data(self, index_name, query):
         try:
@@ -179,16 +238,15 @@ class ElasticsearchService(object):
                 range_query["range"][field][range_type] = range_value
             bool_query["bool"]["must"].append(range_query)
         
-        query = {"query": bool_query}
+        query = {"query": bool_query, "size": params.get('size', 10000)}
         try:
             response = self.es.search(index=index_name, body=query)
             return response
         except Exception as e:
             log.error(f'Error executing search query in {index_name}: {e}')
             return None
-
-
-
+        
+        
     def dynamic_aggregation_query(self, index_name, agg_params):
         # Use the cached mapping or fetch it if not cached
         # mappings = self.es.indices.get_mapping(index=index_name)
