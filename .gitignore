@@ -162,3 +162,6 @@ cython_debug/
 /src/venv/
 /src/logs/
 /src/config.py
+/data/tmp/
+
+/data/hotel_bookings_clean_*.csv
