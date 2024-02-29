@@ -30,3 +30,4 @@ urllib3==2.2.0
 streamlit
 clean-text[gpl]
 ollama
+tdqm
