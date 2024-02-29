@@ -30,9 +30,10 @@ StayScope is a comprehensive asynchronous analytics platform designed to transfo
 5. **Schemas (`schemas.py`):** Pydantic models for request and response validation.
 6. **API Routes (`api_routes.py`):** FastAPI route definitions for Elasticsearch operations.
 7. **LLM (`llm_model.py`):** Contains LLM model for report interpretation.
-8. **Configurations (`config.py`):** Configuration settings (database URLs, Elasticsearch connection details, etc.).
-9. **Visualization (`fetch_utils.py`):** Visualization functions for fetched data from REST API.
-10. **User Interface - Frontend (`streamlit_webapp.py`):** User Interface (Frontend) for interaction.
+8. **ETL (`etl_utils.py`):** Incorporates an Extract-Transform-Load (ETL) approach for data processing.
+9. **Configurations (`config.py`):** Configuration settings (database URLs, Elasticsearch connection details, etc.).
+10. **Visualization (`fetch_utils.py`):** Visualization functions for fetched data from REST API.
+11. **User Interface - Frontend (`streamlit_webapp.py`):** User Interface (Frontend) for interaction.
 
 ---
 
