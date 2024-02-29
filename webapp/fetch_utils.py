@@ -70,7 +70,7 @@ class DataVisualizer:
             st.plotly_chart(fig)
 
             #call generator to generate report
-            self.generator.generate_report_on_button_click(self.data['top_countries'], key="top_countries_button")
+            self.generator.generate_report_on_button_click(df_countries.to_json(), key="top_countries_button")
                 
                 
 
@@ -133,7 +133,7 @@ class DataVisualizer:
             st.plotly_chart(fig)
 
 
-            self.generator.generate_report_on_button_click(self.data['cancellation_rate'], key="cancellation_rate_button")
+            self.generator.generate_report_on_button_click(df_cancellation_rate.to_json(), key="cancellation_rate_button")
 
 
     def visualize_cancellation_rate_pie(self):
@@ -204,7 +204,10 @@ class DataVisualizer:
             # Display the pie chart in Streamlit
             st.plotly_chart(fig)
 
-            self.generator.generate_report_on_button_click(self.data['cancellation_rate'], key="cancellation_rate_pie_button")
+            #save df_pie as json
+            self.generator.generate_report_on_button_click(df_pie.to_json(), key="cancellation_rate_pie_button")
+
+            # self.generator.generate_report_on_button_click(self.data['cancellation_rate'], key="cancellation_rate_pie_button")
 
     def visualize_adr_by_month(self):
         if "adr_by_month" in self.data and self.data["adr_by_month"] is not None:
@@ -250,7 +253,7 @@ class DataVisualizer:
             )
             st.plotly_chart(fig)
 
-            self.generator.generate_report_on_button_click(adr_data, key="adr_by_month_button")
+            self.generator.generate_report_on_button_click(df_adr_by_month.to_json(), key="adr_by_month_button")
         
 
     def visualize_length_of_stay_distribution(self):
@@ -290,7 +293,7 @@ class DataVisualizer:
             )
             st.plotly_chart(fig)
 
-            self.generator.generate_report_on_button_click(self.data['length_of_stay_distribution'], key="length_of_stay_distribution_button")
+            self.generator.generate_report_on_button_click(df_length_of_stay_sorted.to_json(), key="length_of_stay_distribution_button")
 
 
     def visualize_special_requests_impact_on_cancellations(self):
@@ -331,7 +334,7 @@ class DataVisualizer:
             
             # st.line_chart(df_special_requests.set_index("Special Requests"))
 
-            self.generator.generate_report_on_button_click(self.data['special_requests_impact_on_cancellations'], key="special_requests_impact_on_cancellations_button")
+            self.generator.generate_report_on_button_click(df_special_requests.to_json(), key="special_requests_impact_on_cancellations_button")
 
     def visualize_average_lead_time_by_cancellation_status(self):
         if 'average_lead_time_by_cancellation_status' in self.data and self.data['average_lead_time_by_cancellation_status'] is not None:
@@ -361,7 +364,7 @@ class DataVisualizer:
             )
             st.plotly_chart(pie_chart)
 
-            self.generator.generate_report_on_button_click(self.data['average_lead_time_by_cancellation_status'], key="average_lead_time_by_cancellation_status_button")
+            self.generator.generate_report_on_button_click(df_lead_time.to_json(), key="average_lead_time_by_cancellation_status_button")
 
     def visualize_bookings_distribution_by_room_type(self):
         if "bookings_distribution_by_room_type" in self.data and self.data["bookings_distribution_by_room_type"] is not None:
@@ -397,7 +400,7 @@ class DataVisualizer:
             # Display the updated pie chart in Streamlit
             st.plotly_chart(fig)
 
-            self.generator.generate_report_on_button_click(bookings_distribution_by_room_type, key="bookings_distribution_by_room_type_button")
+            self.generator.generate_report_on_button_click(df_room_types.to_json(), key="bookings_distribution_by_room_type_button")
 
     def visualize_bookings_by_guest_country(self):
         if "bookings_by_guest_country" in self.data and self.data["bookings_by_guest_country"] is not None:
@@ -433,7 +436,7 @@ class DataVisualizer:
             # Display the treemap in Streamlit
             st.plotly_chart(fig)
             
-            self.generator.generate_report_on_button_click(bookings_by_guest_country, key="bookings_by_guest_country_button")
+            self.generator.generate_report_on_button_click(df_guest_countries.to_json(), key="bookings_by_guest_country_button")
 
     def visualize_booking_source_analysis(self):
         if "booking_source_analysis" in self.data and self.data["booking_source_analysis"] is not None:
@@ -466,7 +469,7 @@ class DataVisualizer:
             # Display the updated bar chart in Streamlit
             st.plotly_chart(fig)
 
-            self.generator.generate_report_on_button_click(booking_source_analysis, key="booking_source_analysis_button")
+            self.generator.generate_report_on_button_click(df_booking_sources.to_json(), key="booking_source_analysis_button")
 
     def visualize_booking_trends_over_time(self):
         if "booking_trends_over_time" in self.data and self.data["booking_trends_over_time"] is not None:
@@ -527,53 +530,69 @@ class DataVisualizer:
             # Display the line chart in Streamlit
             st.plotly_chart(fig)
 
-            self.generator.generate_report_on_button_click(booking_trends_over_time, key="booking_trends_over_time_button")
+            self.generator.generate_report_on_button_click(df_booking_trends.to_json(), key="booking_trends_over_time_button")
+
 
     def visualize_revenue_analysis_by_room_and_month(self):
         if "revenue_analysis_by_room_and_month" in self.data and self.data["revenue_analysis_by_room_and_month"] is not None:
             revenue_analysis_by_room_and_month = self.data["revenue_analysis_by_room_and_month"]
 
-            # Process the data
-            data = []
-            room_types = sorted([room['key'] for room in revenue_analysis_by_room_and_month])
+            # Initialize an empty list to store the flattened data
+            flattened_data = []
 
+            # Iterate through each room type and its revenue data
             for room in revenue_analysis_by_room_and_month:
-                room_data = {
-                    'type': 'scatter',
-                    'name': room['key'],
-                    'x': [bucket['key_as_string'] for bucket in room['monthly_revenue']['buckets']],
-                    'y': [bucket['revenue']['value'] for bucket in room['monthly_revenue']['buckets']]
-                }
-                data.append(room_data)
+                for bucket in room['monthly_revenue']['buckets']:
+                    flattened_data.append({
+                        'Room Type': room['key'],
+                        'Month': bucket['key_as_string'],
+                        'Revenue': bucket['revenue']['value']
+                    })
 
-            # Create a Plotly figure
-            fig = go.Figure(data)
+            # Convert the flattened data list into a DataFrame
+            df_revenue_analysis = pd.DataFrame(flattened_data)
 
-            # # Customizing the layout
-            # fig.update_layout(
-            #     title='Revenue Analysis by Room and Month',
-            #     xaxis_title='Month',
-            #     yaxis_title='Revenue',
-            #     template='plotly_dark'
-            # )
+            # Format the 'Revenue' column to display currency
+            df_revenue_analysis['Revenue'] = df_revenue_analysis['Revenue'].apply(lambda x: '{:,.2f}'.format(x))
 
-            #update title and set it to center
+            # Initialize an empty list for Plotly graph objects
+            plotly_data = []
+
+            # Group the DataFrame by room type to create separate traces for each room type
+            for room_type, group in df_revenue_analysis.groupby('Room Type'):
+                trace = go.Scatter(
+                    x=group['Month'],
+                    y=group['Revenue'],
+                    mode='markers+lines',
+                    name=room_type
+                )
+                plotly_data.append(trace)
+
+            # Create a Plotly figure with the traces
+            fig = go.Figure(plotly_data)
+
+            # Update the layout of the figure
             fig.update_layout(
                 title={
                     'text': 'Revenue Analysis by Room and Month',
-                    'y':0.95,  # Adjust the y position of the title
-                    'x':0.5,
+                    'y': 0.95,
+                    'x': 0.5,
                     'xanchor': 'center',
                     'yanchor': 'top'
                 },
                 xaxis_title='Month',
                 yaxis_title='Revenue',
-                margin=dict(t=100, l=0, r=0, b=0)  # Increase top margin to accommodate title
+                margin=dict(t=100, l=0, r=0, b=0)  # Adjust margins to accommodate the title
             )
-            # Display the line chart in Streamlit
-            st.plotly_chart(fig)
 
-            self.generator.generate_report_on_button_click(revenue_analysis_by_room_and_month, key="revenue_analysis_by_room_and_month_button")
+            # Display the figure in Streamlit
+            st.plotly_chart(fig)
+            
+            # Convert DataFrame to a JSON string suitable for the LLM model
+            json_data = df_revenue_analysis.to_json(orient='records', date_format='iso')
+            
+            # Generate a report on button click, passing the JSON data
+            self.generator.generate_report_on_button_click(json_data, key="revenue_analysis_by_room_and_month_button")
 
     def visualize_impact_of_lead_time_on_adr(self):
         if "impact_of_lead_time_on_adr" in self.data and self.data["impact_of_lead_time_on_adr"] is not None:
@@ -582,6 +601,12 @@ class DataVisualizer:
             # Prepare the data for plotting
             lead_times = [item['key'] for item in impact_of_lead_time_on_adr]
             average_adrs = [item['average_adr']['value'] for item in impact_of_lead_time_on_adr]
+
+            #create a dataframe
+            df_lead_time = pd.DataFrame({
+                "Lead Time": lead_times,
+                "Average ADR": average_adrs
+            })
 
             # Create a scatter plot
             fig = go.Figure(data=go.Scatter(x=lead_times, y=average_adrs, mode='markers+lines', name='ADR vs. Lead Time'))
@@ -611,7 +636,7 @@ class DataVisualizer:
             # Display the line chart in Streamlit
             st.plotly_chart(fig)
 
-            self.generator.generate_report_on_button_click(impact_of_lead_time_on_adr, key="impact_of_lead_time_on_adr_button")
+            self.generator.generate_report_on_button_click(df_lead_time.to_json(), key="impact_of_lead_time_on_adr_button")
 
 
     def visualize_analyze_booking_composition(self):
@@ -623,6 +648,12 @@ class DataVisualizer:
             #run over categories and remove .0 parts from the string
             categories = [category.replace('.0', '') for category in categories_dirty]
             doc_counts = [entry['doc_count'] for entry in analyze_booking_composition['booking_composition']['buckets']]
+
+            #create a dataframe
+            df_booking_composition = pd.DataFrame({
+                "Booking Composition": categories,
+                "Number of Bookings": doc_counts
+            })
 
             # Create bar chart
             fig = go.Figure(data=[go.Bar(x=categories, y=doc_counts)])
@@ -642,7 +673,7 @@ class DataVisualizer:
             # Display the bar chart in Streamlit
             st.plotly_chart(fig)
 
-            self.generator.generate_report_on_button_click(analyze_booking_composition, key="analyze_booking_composition_button")
+            self.generator.generate_report_on_button_click(df_booking_composition.to_json(), key="analyze_booking_composition_button")
 
     def visualize_correlate_cancelations_with_factors(self):
         if "correlate_cancelations_with_factors" in self.data and self.data["correlate_cancelations_with_factors"] is not None:
@@ -653,6 +684,15 @@ class DataVisualizer:
             special_requests_count = [bucket["special_requests_count"]["value"] for bucket in correlate_cancelations_with_factors]
             average_stay_length = [bucket["average_stay_length"]["value"] for bucket in correlate_cancelations_with_factors]
             average_lead_time = [bucket["average_lead_time"]["value"] for bucket in correlate_cancelations_with_factors]
+
+            #create a dataframe
+            df_cancelations_with_factors = pd.DataFrame({
+                "Cancellation Status": statuses,
+                "Special Requests Count": special_requests_count,
+                "Average Stay Length": average_stay_length,
+                "Average Lead Time": average_lead_time
+            })
+
 
             # Create the Plotly graph
             fig = go.Figure(data=[
@@ -676,7 +716,7 @@ class DataVisualizer:
             # Display the figure in Streamlit
             st.plotly_chart(fig)
 
-            self.generator.generate_report_on_button_click(correlate_cancelations_with_factors, key="correlate_cancelations_with_factors_button")
+            self.generator.generate_report_on_button_click(df_cancelations_with_factors.to_json(), key="correlate_cancelations_with_factors_button")
 
     # def visualize_correlate_adr_with_factors(self): 
     #     if "correlate_adr_with_factors" in self.data and self.data["correlate_adr_with_factors"] is not None:
@@ -733,6 +773,12 @@ class DataVisualizer:
                     labels_hotel_type.append(f"{repeat_status} - {hotel_type['key']}")
                     values_hotel_type.append(hotel_type["doc_count"])
 
+            #create a dataframe
+            df_repeat_guests = pd.DataFrame({
+                "Guest Type": labels_hotel_type,
+                "Number of Bookings": values_hotel_type
+            })
+
             # Creating the pie chart with enhancements
             fig_pie = go.Figure(data=[go.Pie(labels=labels_hotel_type, values=values_hotel_type, hole=.4, marker_colors=colors, rotation=90, pull=[0.1, 0, 0.1, 0, 0.1, 0])])
             fig_pie.update_traces(textinfo='percent+label', hoverinfo='label+value', textfont_size=12)
@@ -762,4 +808,4 @@ class DataVisualizer:
             # Display the pie chart visualization
             st.plotly_chart(fig_pie)
 
-            self.generator.generate_report_on_button_click(analyze_repeat_guest_bookings, key="analyze_repeat_guest_bookings_button")
+            self.generator.generate_report_on_button_click(df_repeat_guests.to_json(), key="analyze_repeat_guest_bookings_button")
