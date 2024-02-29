@@ -1,6 +1,6 @@
 # StayScope
 
-StayScope is a comprehensive analytics platform designed to transform hotel booking data into actionable insights. It integrates advanced data processing and visualization tools to support decision-making in the hospitality and hotel industry.
+StayScope is a comprehensive asynchronous analytics platform designed to transform hotel booking data into actionable insights. It integrates advanced data processing and visualization tools to support decision-making in the hospitality and hotel industry.
 
 **_[DEMO](#demo) can be found below._**
 
@@ -105,9 +105,15 @@ ELASTICSEARCH_SETTINGS = {
     'auth': ('user', 'secret') #default.
 }
 ES_INDEX_NAME = 'your-es-index-name'
-DATA_PATH = 'your-data-path'
+DATA_PATH = 'your-data-file-path'
+DATA_FOLDER_PATH = "your-data-folder-path"
+TMP_PATH = "your-tmp-data-folder-path"
+TMP_CSV_FILENAME = 'your-tmp-data-file-name'
 
-LLM_MODEL = 'mistral' #Can be changed.
+LLM_MODEL = ['mistral','gemma:7b', 'gemma:2b','phi']
+PROMPT_TEMPLATE = """
+your fancy prompt
+"""
 
 #ENDPOINT LIST, SUGGESTED TO KEEP AS IT IS.
 ENDPOINTS = {
@@ -124,10 +130,6 @@ ENDPOINTS = {
         "revenue_analysis_by_room_and_month": "/api/v1/reports/revenue_analysis_by_room_and_month",
         "impact_of_lead_time_on_adr": "/api/v1/reports/impact_of_lead_time_on_adr",
         "analyze_booking_composition": "/api/v1/reports/analyze_booking_composition",
-
-https://github.com/nedimcanulusoy/StayScope/assets/37252702/e817fa01-8573-4670-a378-3b595bd6ba99
-
-
         "correlate_cancelations_with_factors": "/api/v1/reports/correlate_cancelations_with_factors",
         "correlate_adr_with_factors": "/api/v1/reports/correlate_adr_with_factors",
         "analyze_repeat_guest_bookings": "/api/v1/reports/analyze_repeat_guest_bookings",
