@@ -1,37 +1,39 @@
 import streamlit as st
-import asyncio, json, re
+import asyncio, json
 from ollama import AsyncClient
-from cleantext import clean
-import sys
+import sys, time, random, string
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from src.config import LLM_MODEL
+from src.config import LLM_MODEL, PROMPT_TEMPLATE
 
 class AsyncTextGenerator:
     def __init__(self):
-        pass  # No initialization needed if we're directly displaying the text
+        self.llm_model = None
 
     async def generate_text_stream(self, data):
-        prompt_template = """This is your system prompt and you must do exactly what is written here. Based on the following data, please generate a brief report outlining notable trends, 
-        comparing different scenarios, and offering actionable suggestions where appropriate in hospitality industry. Keep the report under two paragraphs in length. 
-        Lastly, do NOT mention JSON or do NOT say like "This is a JSON response", "This is a JSON response from an Elasticsearch query" or "The response contains" in the report."""
-
         # Serialize and format the data
         serialized_data = json.dumps(data, indent=2)
         formatted_data = '"""' + serialized_data + '"""'
 
-        prompt = f"{prompt_template}\n\n{formatted_data}"
+        prompt = f"{PROMPT_TEMPLATE}\n\n{formatted_data}"
 
         message = {'role': 'user', 'content': prompt}
-        content = ''
-        async for part in await AsyncClient().chat(model=LLM_MODEL, messages=[message], stream=True):
+        content = """"""
+        start_time = time.time()  # Start the timer
+        async for part in await AsyncClient().chat(model=self.llm_model, messages=[message], stream=True):
             content += part['message']['content'] + ''
-        
-        cleaned_content = clean(content, no_line_breaks=True, fix_unicode=True, to_ascii=True, lower=False)
+        end_time = time.time()  # Stop the timer
 
+        content_clean = content.replace("```markdown", "").replace("```", "").replace("#","##").replace("##","###")
 
-        st.expander('Generated Report', expanded=True).write(cleaned_content) #cleaned_content)
+        report_generation_time = end_time - start_time
+        with st.expander(f'Generated Report [Took: {round(report_generation_time, 2)} sec]', expanded=True):
+            st.markdown(content_clean)
 
+    def set_model(self, model_choice):
+        self.llm_model = model_choice
+
+                
     def run_async_in_thread(self, data):
         async def run():
             await self.generate_text_stream(data)
@@ -40,8 +42,12 @@ class AsyncTextGenerator:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(run())
-
+        
     def generate_report_on_button_click(self, data, key='default'):
+        # Use a selectbox for choosing a model
+        chosen_model = st.selectbox("Choose the LLM model", options=LLM_MODEL, index=0, key=f"model_choice_{key}")
+        self.set_model(chosen_model)
+
         if st.button('Generate Report', key=key):
             with st.spinner('Generating report...'):
-                asyncio.run(self.generate_text_stream(data))
+                self.run_async_in_thread(data)  # Use the method that runs async in a separate thread
