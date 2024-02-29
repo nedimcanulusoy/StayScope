@@ -8,25 +8,46 @@ from elasticsearch_operations import ElasticsearchService
 from config import ELASTICSEARCH_SETTINGS, ES_INDEX_NAME, DATA_PATH
 
 # Initialize the logger
-log_api, log_db = Logger(__name__, './logs/api.log').get_logger(), Logger(__name__, './logs/db.log').get_logger()
+log_api, log_db, log_es = Logger(__name__, './logs/api.log').get_logger(), Logger(__name__, './logs/db.log').get_logger(), Logger(__name__, './logs/elasticsearch.log').get_logger()
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import itertools
+from models import get_db, HotelBooking
+from sqlalchemy.orm import Session
+
+def chunk_data(data, size):
+    it = iter(data)
+    for i in itertools.count():
+        batch = list(itertools.islice(it, size))
+        if not batch:
+            break
+        yield batch
+
+def upsert_chunk(es_service, index_name, chunk):
+    # Transform each SQL model instance in the chunk to a dict suitable for Elasticsearch
+    documents = [instance_to_dict(instance) for instance in chunk]
+    es_service.bulk_upsert(documents, index_name)
+
+def instance_to_dict(instance):
+    instance_dict = instance.__dict__
+    instance_dict.pop('_sa_instance_state', None)
+    return instance_dict
 
 def sync_sql_to_elasticsearch():
     db: Session = next(get_db())
+    all_data = db.query(HotelBooking).all()
+    chunks = list(chunk_data(all_data, 2500))  #chunk size can be adjusted but I found 2500 as optimal value
+    
     es_service = ElasticsearchService(ELASTICSEARCH_SETTINGS)
 
-    for instance in db.query(HotelBooking).all():
-        #Transform SQL model instance to a dict suitable for Elasticsearch
-        instance_dict = instance.__dict__
-        instance_dict.pop('_sa_instance_state')
-        # instance_dict['country_suggest'] = instance_dict['country']
-        # instance_dict['hotel_suggest'] = instance_dict['hotel']
-        instance_dict['hotel_suggest'] = {"input": [instance_dict['hotel']]}
-        instance_dict['country_suggest'] = {"input": [instance_dict['country']]}
-
-
-        # Index the document in Elasticsearch
-        es_service.index_document(ES_INDEX_NAME, instance_dict)
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = [executor.submit(upsert_chunk, es_service, ES_INDEX_NAME, chunk) for chunk in chunks]
+        
+        for future in as_completed(futures):
+            try:
+                future.result()
+            except Exception as e:
+                print(f"Operation failed: {e}")
 
 def start_scheduler():
     scheduler = BackgroundScheduler()
