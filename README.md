@@ -26,7 +26,7 @@ StayScope is a comprehensive asynchronous analytics platform designed to transfo
 
 1. **Main Application File (`main.py`):** Entry point to your FastAPI application.
 2. **Database Models (`models.py`):** Contains SQLAlchemy models and Database operations.
-3. ***Elasticsearch Operations (`elasticsearch_operations.py`):** Handles Elasticsearch indexing, searching, and other operations.
+3. **Elasticsearch Operations (`elasticsearch_operations.py`):** Handles Elasticsearch indexing, searching, and other operations.
 5. **Schemas (`schemas.py`):** Pydantic models for request and response validation.
 6. **API Routes (`api_routes.py`):** FastAPI route definitions for Elasticsearch operations.
 7. **LLM (`llm_model.py`):** Contains LLM model for report interpretation.
